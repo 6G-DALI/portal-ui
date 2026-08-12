@@ -29,6 +29,28 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
+    # The silent-SSO callback is loaded INSIDE a same-origin iframe, so it is
+    # the one page that must be framable. The server-level
+    # `frame-ancestors 'none'` + `X-Frame-Options: DENY` below refuse all
+    # framing — including by this origin — which surfaces in DevTools as the
+    # unhelpful "(blocked:other)".
+    #
+    # Scoped here rather than relaxed site-wide, so only this callback is
+    # framable and only by us; the app keeps the strictest posture.
+    #
+    # nginx add_header inheritance is all-or-nothing: declaring any add_header
+    # in a location drops every add_header from the server block, so the ones
+    # we still want are repeated here.
+    location = /silent-check-sso.html {
+        add_header Content-Security-Policy "default-src 'none'; script-src 'unsafe-inline'; frame-ancestors 'self'; base-uri 'none'" always;
+        add_header X-Frame-Options "SAMEORIGIN" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        # It carries an authorization code in the query string — never cache it.
+        add_header Cache-Control "no-store, must-revalidate" always;
+        expires -1;
+    }
+
     # Runtime configuration must never be cached, or a deploy-time URL change
     # would not reach browsers that already hold the old file.
     location = /config.js {
