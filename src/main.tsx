@@ -54,11 +54,13 @@ function signIn() {
 }
 
 async function bootstrap() {
-  // keycloak-js needs crypto.subtle for PKCE S256, and browsers only expose the
-  // Web Crypto API in a secure context: HTTPS, or http on localhost/127.0.0.1.
-  // Served over plain http on any other host it throws "Web Crypto API is not
-  // available", which does not hint at the cause — so check first and say so.
-  if (!window.isSecureContext || !window.crypto?.subtle) {
+  // keycloak-js throws "Web Crypto API is not available" from three places:
+  // createUUID (crypto.randomUUID, for state/nonce), sha256Digest
+  // (crypto.subtle, for PKCE S256) and generateRandomData. The first two APIs
+  // are exposed only in a secure context — HTTPS, or http on localhost /
+  // 127.0.0.1 — so on plain http elsewhere init fails before any of our config
+  // is even used, with a message that names none of this. Check up front.
+  if (!window.isSecureContext || !window.crypto?.subtle || !window.crypto?.randomUUID) {
     renderFatal(
       `This page is served over an insecure connection (${window.location.protocol}//${window.location.host}), `
       + 'so the browser withholds the Web Crypto API that sign-in requires. '
