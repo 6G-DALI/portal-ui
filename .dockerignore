@@ -1,0 +1,18 @@
+# Without this, `COPY . .` overwrites the node_modules that `npm ci` just built
+# inside the image with the host's — which on macOS means darwin/arm64 native
+# binaries (esbuild, rollup) landing in a linux image.
+node_modules
+dist
+
+# Not needed in the image, and .env must never be baked in: service URLs are
+# supplied at runtime through public/config.js.
+.env
+.env.local
+.env.*.local
+
+.git
+.github
+.gitignore
+.dockerignore
+README.md
+.DS_Store

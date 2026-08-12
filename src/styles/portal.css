@@ -1,0 +1,207 @@
+/* =========================================================================
+   Portal-specific styles.
+
+   Everything structural comes from Bootstrap + AdminLTE and the shared theme
+   layer, exactly as in dataops-ui. This file only adds the service-card and
+   documentation-list treatments the portal introduces, built from the same
+   tokens so they sit inside the shared visual language.
+   ========================================================================= */
+
+/* ---- Service cards (§13.3 grid view) ------------------------------------ */
+
+.service-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-4);
+  /* Matches the themed .card treatment (§6.3). */
+  background: rgba(17, 22, 32, 0.88);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(8px);
+  text-decoration: none;
+  color: inherit;
+}
+
+.service-card:hover {
+  text-decoration: none;
+}
+
+.service-card-linked {
+  transition: border-color var(--duration-normal) var(--ease-standard),
+              background var(--duration-normal) var(--ease-standard),
+              transform var(--duration-normal) var(--ease-standard);
+}
+
+.service-card-linked:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-bright);
+  transform: translateY(-2px);
+  color: inherit;
+}
+
+.service-card-linked:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+/* Unavailable: recessed, no hover affordance, reason stated in text. */
+.service-card-inert {
+  opacity: 0.72;
+  box-shadow: none;
+}
+
+.service-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.service-card-icon {
+  display: inline-flex;
+  color: var(--accent-cyan);
+  font-size: 16px;
+}
+
+.service-card-inert .service-card-icon {
+  color: var(--text-muted);
+}
+
+.service-card-name {
+  font-family: var(--font-display);
+  font-size: var(--size-card-title);
+  font-weight: 700;
+}
+
+.service-card-tag {
+  /* Short technical tag — the sanctioned uppercase exception (§5.3). */
+  margin-left: auto;
+  padding: 1px var(--space-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.service-card-description {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: var(--size-label);
+}
+
+.service-card-foot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* Availability pill. The dot is paired with a text label so state is never
+   communicated by colour alone (§4.2). */
+.availability {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--size-caption);
+  font-weight: 500;
+}
+
+.availability::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.availability-available { color: var(--accent-green); }
+.availability-internal  { color: var(--accent-amber); }
+.availability-planned   { color: var(--text-muted); }
+
+.service-card-host {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: var(--size-caption);
+  color: var(--text-muted);
+}
+
+.service-card-note {
+  flex-basis: 100%;
+  font-size: var(--size-caption);
+  color: var(--text-muted);
+}
+
+.service-card-linked:hover .service-card-host {
+  color: var(--accent-cyan);
+}
+
+/* ---- Documentation list ------------------------------------------------- */
+
+.doc-item {
+  display: flex;
+  gap: var(--space-3);
+  height: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: rgba(17, 22, 32, 0.6);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--duration-normal) var(--ease-standard),
+              background var(--duration-normal) var(--ease-standard);
+}
+
+.doc-item:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-bright);
+  text-decoration: none;
+  color: inherit;
+}
+
+.doc-icon {
+  display: inline-flex;
+  padding-top: 2px;
+  color: var(--accent-purple);
+  font-size: 16px;
+}
+
+.doc-name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-weight: 500;
+}
+
+.doc-name svg {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.doc-description {
+  display: block;
+  color: var(--text-secondary);
+  font-size: var(--size-caption);
+}
+
+/* ---- Section headings --------------------------------------------------- */
+
+.portal-section-title {
+  font-family: var(--font-display);
+  font-size: var(--size-section-title);
+  font-weight: 700;
+}
+
+.portal-section-description {
+  max-width: 75ch; /* §5.3 */
+  color: var(--text-secondary);
+  font-size: var(--size-label);
+}

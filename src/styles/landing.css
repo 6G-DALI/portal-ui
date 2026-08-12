@@ -1,0 +1,218 @@
+/* =========================================================================
+   Public landing page — §13.1 full-screen split layout.
+
+   Outside the AdminLTE shell (an anonymous visitor gets no application
+   navigation), but built from the same tokens, so signing in is a continuation
+   rather than a change of product.
+   ========================================================================= */
+
+.landing {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  grid-template-rows: 1fr auto;
+  min-height: 100vh;
+  background: var(--bg-base);
+}
+
+/* ---- Left: identity and context ---------------------------------------- */
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  padding: var(--space-12) var(--space-8);
+  border-right: 1px solid var(--border);
+  /* §2.3: subtle depth, not decoration. A fixed gradient plus a faint grid,
+     no animation loud enough to compete with the sign-in action. */
+  background:
+    radial-gradient(circle at 18% 22%, rgba(0, 212, 255, 0.07), transparent 42%),
+    linear-gradient(0deg, transparent 95%, var(--border-subtle) 95%) 0 0 / 100% 28px,
+    linear-gradient(90deg, transparent 95%, var(--border-subtle) 95%) 0 0 / 28px 100%,
+    var(--gradient-hero);
+}
+
+.landing-brand-inner {
+  max-width: 62ch;
+  margin-left: auto;
+  margin-right: var(--space-8);
+}
+
+.landing-identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
+}
+
+.landing-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--accent-cyan);
+  border-radius: var(--radius-sm);
+  color: var(--accent-cyan);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.landing-wordmark {
+  font-family: var(--font-display);
+  font-size: var(--size-section-title);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+
+.landing-wordmark-accent {
+  color: var(--accent-cyan);
+}
+
+.landing-title {
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 34px);
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  margin-bottom: var(--space-4);
+}
+
+.landing-lede {
+  max-width: 68ch; /* §5.3 */
+  color: var(--text-secondary);
+  margin-bottom: var(--space-8);
+}
+
+.landing-facts {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-8);
+}
+
+.landing-facts dt {
+  font-family: var(--font-body);
+  font-size: var(--size-caption);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.landing-facts dd {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: var(--size-label);
+}
+
+.landing-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  list-style: none;
+  padding: 0;
+}
+
+.landing-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--text-secondary);
+  font-size: var(--size-label);
+  text-decoration: none;
+}
+
+.landing-links a:hover {
+  color: var(--accent-cyan);
+}
+
+.landing-links svg {
+  font-size: 11px;
+}
+
+/* ---- Right: sign-in ----------------------------------------------------- */
+
+.landing-action {
+  display: flex;
+  align-items: center;
+  padding: var(--space-12) var(--space-8);
+  background: var(--bg-surface);
+}
+
+.landing-action-inner {
+  width: 100%;
+  max-width: 44ch;
+  margin-right: auto;
+  margin-left: var(--space-8);
+}
+
+.landing-action-title {
+  font-family: var(--font-display);
+  font-size: var(--size-section-title);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-3);
+}
+
+.landing-action-text {
+  color: var(--text-secondary);
+  font-size: var(--size-label);
+  margin-bottom: var(--space-6);
+}
+
+.landing-action-note,
+.landing-action-help {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--size-caption);
+}
+
+.landing-action-help {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+/* ---- Footer ------------------------------------------------------------- */
+
+.landing-footer {
+  grid-column: 1 / -1;
+  padding: var(--space-4) var(--space-8);
+  border-top: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: var(--size-caption);
+}
+
+/* ---- Responsive (§23) --------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .landing {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+  }
+
+  .landing-brand {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .landing-action {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .landing-brand-inner,
+  .landing-action-inner {
+    margin: 0;
+    max-width: none;
+  }
+
+  /* Sign-in first on a small screen: it is why the visitor is here. */
+  .landing-brand { order: 2; }
+  .landing-action { order: 1; }
+  .landing-footer { order: 3; }
+}

@@ -1,0 +1,20 @@
+node_modules/
+dist/
+.env
+
+# Local Vite overrides
+.env.local
+.env.*.local
+
+# Build/test output
+dist-ssr/
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+# Editor and OS noise
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
