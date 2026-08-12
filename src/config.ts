@@ -19,6 +19,7 @@ export interface PortalConfig {
      single deployment configures the navbar links in both apps identically.
      Do not rename them without changing dataops-ui/src/components/Layout.tsx. */
   daliUrl: string
+  portalUrl: string
   dataspaceUrl: string
   dataopsUrl: string
   mlopsUrl: string
@@ -46,6 +47,9 @@ const DEFAULTS: PortalConfig = {
   // Shared tool suite. Empty by default: an unset URL drops the navbar link
   // rather than pointing somewhere that does not exist.
   daliUrl: 'https://6gdali.eu/',
+  // This app's own public URL. Empty by default so the navbar entry is dropped
+  // rather than pointing at a guess; set it per deployment.
+  portalUrl: '',
   dataspaceUrl: 'https://catalogue.dspace.sparkworks.net',
   dataopsUrl: '',
   mlopsUrl: '',
@@ -63,6 +67,7 @@ const DEFAULTS: PortalConfig = {
 const ENV_KEYS: Record<keyof PortalConfig, string> = {
   // Identical names to dataops-ui — see PortalConfig above.
   daliUrl: 'VITE_DALI_URL',
+  portalUrl: 'VITE_PORTAL_URL',
   dataspaceUrl: 'VITE_DATASPACE_URL',
   dataopsUrl: 'VITE_DATAOPS_URL',
   mlopsUrl: 'VITE_MLOPS_URL',
@@ -93,6 +98,7 @@ function stripTrailingSlash(url: string): string {
 
 export const config: PortalConfig = {
   daliUrl: resolve('daliUrl'),
+  portalUrl: resolve('portalUrl'),
   dataspaceUrl: resolve('dataspaceUrl'),
   dataopsUrl: resolve('dataopsUrl'),
   mlopsUrl: resolve('mlopsUrl'),

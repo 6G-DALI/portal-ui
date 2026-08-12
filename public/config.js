@@ -11,6 +11,8 @@ window.__PORTAL_CONFIG__ = {
   // SAME names dataops-ui reads, so one config covers both apps. Leave a URL
   // empty to drop its navbar link rather than point at nothing.
   daliUrl: 'https://6gdali.eu/',
+  // This app's own public URL — drives the "Portal" navbar entry.
+  portalUrl: 'https://portal-6gdali.sparkworks.net',
   dataspaceUrl: 'https://catalogue.dspace.sparkworks.net',
   dataopsUrl: '',
   mlopsUrl: '',
