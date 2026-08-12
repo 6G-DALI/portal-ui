@@ -11,7 +11,15 @@ RUN npm run build
 
 FROM nginx:1.27-alpine
 
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Templated rather than copied straight to conf.d: the official nginx image runs
+# envsubst over /etc/nginx/templates at start-up, which lets the CSP name the
+# deployment's Keycloak origin without rebuilding the image.
+COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
+
+# Restrict envsubst to our own variable so nginx's own $uri, $host etc. survive.
+ENV NGINX_ENVSUBST_FILTER=KEYCLOAK_ORIGIN
+# Overridden at run time; this default matches src/config.ts.
+ENV KEYCLOAK_ORIGIN=https://auth.dspace.sparkworks.net
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # config.js is deliberately left writable/mountable: override it at deploy time

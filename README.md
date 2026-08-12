@@ -215,6 +215,63 @@ image with the host's, which on macOS means darwin/arm64 native binaries
 (esbuild, rollup) in a linux image. It also keeps `.env` out of the image:
 service URLs belong in `public/config.js` at runtime, never baked in.
 
+## Deployment behind a Cloudflare tunnel
+
+`docker-compose.yml` runs the portal plus `cloudflared`:
+
+```bash
+cp .env.example .env      # set CLOUDFLARE_TUNNEL_TOKEN
+docker compose up -d
+```
+
+The portal publishes **no host port** — cloudflared reaches it over the internal
+compose network, so nothing is exposed on the host and Cloudflare terminates TLS.
+Uncomment the loopback `ports:` entry if you also want direct local access.
+
+The token is passed via `TUNNEL_TOKEN` in the environment rather than on the
+command line, so it stays out of `docker ps` and the host process list. Compose
+fails fast with a readable message if it is unset.
+
+### Ingress rules live in Cloudflare, not here
+
+A token-provisioned tunnel is **remotely managed**: there is no local
+`config.yml`, and the hostname → service mapping is set in
+*Zero Trust → Networks → Tunnels → your tunnel → Public hostname*. Point it at:
+
+```
+Service:  HTTP
+URL:      portal:80
+```
+
+`portal` is the compose service name, resolvable on the shared network.
+
+### Keycloak must know the new origin
+
+Publishing the portal on a Cloudflare hostname creates a **new browser origin**,
+and Keycloak is per-origin. On the `dali-portal` client, add the tunnel hostname
+to all three of:
+
+- Valid redirect URIs — `https://<hostname>/*`
+- Valid post-logout redirect URIs — the same
+- **Web origins** — `https://<hostname>` (or `+` to inherit from the redirect URIs)
+
+Omitting Web origins is what produces the opaque
+`CORS error on /protocol/openid-connect/token`. The silent-SSO check also needs
+`https://<hostname>/silent-check-sso.html` to be a permitted redirect URI.
+
+### CSP and the Keycloak origin
+
+nginx's Content-Security-Policy names the Keycloak origin in `connect-src`
+(keycloak-js fetches the token and account endpoints) and `frame-src` (the
+`check-sso` iframe). It is substituted at container start from
+`KEYCLOAK_ORIGIN`, via the official nginx image's `/etc/nginx/templates`
+mechanism, with `NGINX_ENVSUBST_FILTER` restricting envsubst to that one
+variable so nginx's own `$uri`/`$host` survive.
+
+Set `KEYCLOAK_ORIGIN` to scheme + host, no path. A mismatch here blocks login
+with a console CSP violation and no server-side error — worth checking first if
+sign-in silently does nothing.
+
 ## Structure
 
 ```
@@ -224,7 +281,8 @@ portal/
 ├── index.html            # loads config.js before the bundle
 ├── public/config.js      # runtime configuration
 ├── Dockerfile            # node build → nginx (§27)
-├── nginx.conf            # SPA routing, cache policy, CSP (§25)
+├── docker-compose.yml    # portal + cloudflared
+├── nginx/                # default.conf.template — SPA routing, cache, CSP (§25)
 └── src/
     ├── main.tsx          # Keycloak bootstrap (mirrors dataops-ui)
     ├── auth/keycloak.ts  # shared-realm adapter

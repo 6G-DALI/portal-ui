@@ -1,0 +1,41 @@
+server {
+    listen 80;
+    server_name _;
+
+    root /usr/share/nginx/html;
+    index index.html;
+
+    # Single page app.
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+
+    # Runtime configuration must never be cached, or a deploy-time URL change
+    # would not reach browsers that already hold the old file.
+    location = /config.js {
+        add_header Cache-Control "no-store, must-revalidate";
+        expires -1;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
+    # §25 hardening.
+    #
+    # ${KEYCLOAK_ORIGIN} is substituted at container start (see the Dockerfile's
+    # /etc/nginx/templates mechanism). It must be present in BOTH:
+    #   connect-src — keycloak-js fetches the token and account endpoints;
+    #   frame-src   — `check-sso` loads a hidden Keycloak iframe to detect an
+    #                 existing session.
+    # With a bare `default-src 'self'` both are blocked and login fails, which
+    # is not obvious from the symptom.
+    #
+    # 'unsafe-inline' is needed for style-src only, because of index.html's
+    # pre-paint background block.
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' ${KEYCLOAK_ORIGIN}; frame-src ${KEYCLOAK_ORIGIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self' ${KEYCLOAK_ORIGIN}" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options "DENY" always;
+}
