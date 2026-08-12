@@ -224,9 +224,54 @@ cp .env.example .env      # set CLOUDFLARE_TUNNEL_TOKEN
 docker compose up -d
 ```
 
+On the server you need **only `docker-compose.yml` and a `.env`** — no repository
+checkout. The compose file pulls `ghcr.io/6g-dali/portal-ui:latest`; the `build:`
+block is commented out because building is what would require the source tree.
+
 The portal publishes **no host port** — cloudflared reaches it over the internal
 compose network, so nothing is exposed on the host and Cloudflare terminates TLS.
 Uncomment the loopback `ports:` entry if you also want direct local access.
+
+### Configuring at run time with environment variables
+
+`docker-entrypoint.d/40-portal-config.sh` regenerates `config.js` at container
+start from the environment, so service URLs **are** settable through `.env` /
+compose `environment:` without a rebuild.
+
+It uses the **same `VITE_*` names** as build time and as dataops-ui, so one set
+of names configures every DALI front end — only the moment they are read differs
+(start-up here, build time in a local `npm run build`).
+
+Precedence is unchanged: a variable that is set wins; anything unset keeps the
+value baked into the image, then the default in `src/config.ts`. So a deployment
+lists only what it needs to change, and setting nothing leaves the image's
+`config.js` untouched.
+
+Two behaviours worth knowing:
+
+- If `config.js` is bind-mounted read-only, the script detects that and leaves it
+  alone — an explicit mount wins over the environment.
+- Values are escaped for a single-quoted JS literal, so a URL containing a quote
+  or backslash cannot break the file.
+
+### config.js does not need to exist on the server
+
+`public/config.js` is **baked into the image**: Vite copies `public/*` into
+`dist/`, and the nginx stage copies `dist/` to the web root. So the committed
+defaults ship with the image and apply as-is.
+
+There are therefore two ways to configure a deployment, and only one of them
+involves a file on the host:
+
+| Approach | Needs a file on the server | When |
+|---|---|---|
+| Image defaults (default) | no | the committed URLs are correct for this deployment |
+| Mount an override | one standalone file | this deployment needs different URLs |
+
+For the override, put a single `portal-config.js` next to the compose file and
+uncomment the `volumes:` entry — it does not need the repository layout. The
+third option is editing `public/config.js` and letting CI rebuild, which keeps
+the deployed config in version control.
 
 The token is passed via `TUNNEL_TOKEN` in the environment rather than on the
 command line, so it stays out of `docker ps` and the host process list. Compose

@@ -1,5 +1,11 @@
 server {
     listen 80;
+    # The image's 10-listen-on-ipv6-by-default.sh only patches the *packaged*
+    # default.conf; it skips ours ("differs from the packaged version"), so IPv6
+    # has to be declared here. Without it `localhost` (which resolves to ::1
+    # first) is refused inside the container — which is what made the healthcheck
+    # fail and, in turn, held back cloudflared's depends_on.
+    listen [::]:80;
     server_name _;
 
     root /usr/share/nginx/html;
