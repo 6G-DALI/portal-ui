@@ -11,6 +11,19 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
+    # Behind the Cloudflare tunnel nginx always sees plain http, so the
+    # visitor's real scheme arrives in X-Forwarded-Proto. If a proxied request
+    # came in over http, redirect: without HTTPS the browser withholds
+    # crypto.subtle and keycloak-js fails with "Web Crypto API is not
+    # available".
+    #
+    # Deliberately keyed on the header being *present and http* — a direct
+    # request to the loopback publish has no X-Forwarded-Proto and is left
+    # alone, since localhost is already a secure context.
+    if ($http_x_forwarded_proto = "http") {
+        return 301 https://$host$request_uri;
+    }
+
     # Single page app.
     location / {
         try_files $uri $uri/ /index.html;

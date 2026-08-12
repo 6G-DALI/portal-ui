@@ -317,6 +317,24 @@ Set `KEYCLOAK_ORIGIN` to scheme + host, no path. A mismatch here blocks login
 with a console CSP violation and no server-side error — worth checking first if
 sign-in silently does nothing.
 
+## Troubleshooting sign-in
+
+| Symptom | Cause |
+|---|---|
+| `Web Crypto API is not available` | The page is on plain `http://` on a non-localhost host. `crypto.subtle`, which PKCE `S256` needs, is only exposed in a **secure context** — HTTPS, or `http://localhost` / `127.0.0.1`. Open the portal over HTTPS. |
+| CORS error on `/protocol/openid-connect/token` | The browser's origin is not in the client's **Web origins**. `localhost` and `127.0.0.1` are different origins; so is each port and each hostname. |
+| Sign-in does nothing, console shows a CSP violation | `KEYCLOAK_ORIGIN` does not match the IdP, so `connect-src`/`frame-src` block it. |
+| `invalid_client` from Keycloak | `keycloakClientId` does not exist in the realm. |
+| 401/403 from the account page | The token lacks the `account` audience, or the user lacks `manage-account`. |
+
+The app checks for the secure context **before** initialising Keycloak and
+reports it in plain language, rather than surfacing keycloak-js's opaque message.
+
+nginx also redirects a proxied `http` request to `https`, keyed on
+`X-Forwarded-Proto` being present and `http` — so a request arriving through the
+Cloudflare tunnel over http is upgraded, while a direct request to the loopback
+publish (no such header, and already a secure context) is left alone.
+
 ## Structure
 
 ```

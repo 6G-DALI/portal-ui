@@ -54,6 +54,19 @@ function signIn() {
 }
 
 async function bootstrap() {
+  // keycloak-js needs crypto.subtle for PKCE S256, and browsers only expose the
+  // Web Crypto API in a secure context: HTTPS, or http on localhost/127.0.0.1.
+  // Served over plain http on any other host it throws "Web Crypto API is not
+  // available", which does not hint at the cause — so check first and say so.
+  if (!window.isSecureContext || !window.crypto?.subtle) {
+    renderFatal(
+      `This page is served over an insecure connection (${window.location.protocol}//${window.location.host}), `
+      + 'so the browser withholds the Web Crypto API that sign-in requires. '
+      + 'Open the portal over HTTPS \u2014 or on localhost for local development.'
+    )
+    return
+  }
+
   // Preserve the requested route across the login round-trip: the OAuth
   // redirect returns to the clean base URL, so stash the hash first.
   if (window.location.hash && !/(?:^|&)(state|access_token|code)=/.test(window.location.hash.slice(1))) {
