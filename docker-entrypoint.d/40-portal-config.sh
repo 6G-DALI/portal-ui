@@ -43,6 +43,7 @@ tmp=$(mktemp)
 # key:env-var pairs. Keep in step with ENV_KEYS in src/config.ts.
 for pair in \
   'daliUrl:VITE_DALI_URL' \
+  'portalUrl:VITE_PORTAL_URL' \
   'dataspaceUrl:VITE_DATASPACE_URL' \
   'dataopsUrl:VITE_DATAOPS_URL' \
   'mlopsUrl:VITE_MLOPS_URL' \
