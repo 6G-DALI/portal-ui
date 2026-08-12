@@ -188,6 +188,20 @@ context is the repo root and no `paths:` filter is needed.
 
 Tags follow the same scheme: the commit SHA, plus `latest` on `main`.
 
+Action majors are pinned to versions whose runtime is **node24**
+(`checkout@v7`, `setup-buildx-action@v4`, `login-action@v4`, `metadata-action@v6`,
+`build-push-action@v7`). The older majors declare node20, which the runner reports
+as deprecated. The `dataops` repo's workflows still use the older majors and will
+show the same notice until bumped.
+
+`setup-buildx-action` is required by the GHA cache: a runner's default buildx
+driver is `docker`, which cannot export a cache. Remove the step if you remove
+`cache-from`/`cache-to`.
+
+The build stage uses `node:24-alpine` — Node 20 reached end of life on
+2026-04-30. This is unrelated to the action-runtime notice above, but an EOL base
+image stops receiving security patches.
+
 There is no separate type-check job — the Dockerfile runs `npm run build`, which
 is `tsc --noEmit && vite build`, so a type error fails the image build.
 
