@@ -42,7 +42,13 @@ server {
     # in a location drops every add_header from the server block, so the ones
     # we still want are repeated here.
     location = /silent-check-sso.html {
-        add_header Content-Security-Policy "default-src 'none'; script-src 'unsafe-inline'; frame-ancestors 'self'; base-uri 'none'" always;
+        # 'self' alongside 'unsafe-inline': the page's own logic is a single
+        # inline postMessage, but Cloudflare injects a same-origin
+        # /cdn-cgi/scripts/... Rocket Loader script into HTML responses, and
+        # without 'self' that injection is refused as (blocked:csp).
+        # Rocket Loader should still be turned OFF for this hostname — it defers
+        # and rewrites scripts, which breaks the callback's timing.
+        add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'unsafe-inline'; frame-ancestors 'self'; base-uri 'none'" always;
         add_header X-Frame-Options "SAMEORIGIN" always;
         add_header X-Content-Type-Options "nosniff" always;
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
