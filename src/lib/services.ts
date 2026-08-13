@@ -7,16 +7,17 @@ import {
   FiFileText,
   FiGitBranch,
   FiGlobe,
-  FiSearch,
-  FiServer,
-  FiShare2,
   FiShield,
-  FiSliders,
 } from 'react-icons/fi'
 import { config } from '../config'
 
 /**
  * The service registry — the portal's entire content model.
+ *
+ * Only user-facing applications belong here. The APIs behind them (repository,
+ * search, SPARQL, the DataOps orchestrator) and the identity provider are
+ * infrastructure: nobody navigates to them from a portal, so listing them added
+ * cards a user can do nothing with.
  *
  * `availability` is declared, not probed. Nothing here polls a health
  * endpoint, so the portal must not imply live status it cannot verify (§2.3
@@ -75,37 +76,6 @@ export const SERVICE_GROUPS: ServiceGroup[] = [
         tag: 'DCAT-AP',
         availability: availabilityOf(config.dataspaceUrl),
       },
-      {
-        id: 'repo-api',
-        name: 'Repository API',
-        description:
-          'piveau-hub-repo. Register and retrieve catalogue records as RDF; the write path into the data space.',
-        url: config.repoApiUrl,
-        icon: FiServer,
-        tag: 'REST',
-        availability: availabilityOf(config.repoApiUrl),
-      },
-      {
-        id: 'search-api',
-        name: 'Search API',
-        description:
-          'piveau-hub-search. Full-text and faceted query API backing the catalogue front end.',
-        url: config.searchApiUrl,
-        icon: FiSearch,
-        tag: 'REST',
-        availability: availabilityOf(config.searchApiUrl),
-      },
-      {
-        id: 'sparql',
-        name: 'SPARQL endpoint',
-        description:
-          'Virtuoso triplestore holding the catalogue graph. The source of truth behind the search index.',
-        url: '',
-        icon: FiShare2,
-        tag: 'SPARQL',
-        availability: 'internal',
-        note: 'Bound to loopback on the data space host — reach it over an SSH tunnel.',
-      },
     ],
   },
   {
@@ -122,16 +92,6 @@ export const SERVICE_GROUPS: ServiceGroup[] = [
         icon: FiGitBranch,
         tag: 'AIRFLOW',
         availability: availabilityOf(config.dataopsUrl),
-      },
-      {
-        id: 'orchestrator',
-        name: 'DataOps Orchestrator',
-        description:
-          'REST API behind the DataOps interface: pipeline execution, dataset registration and quality runs.',
-        url: config.orchestratorUrl,
-        icon: FiSliders,
-        tag: 'REST',
-        availability: availabilityOf(config.orchestratorUrl),
       },
       {
         id: 'mlops',
@@ -170,23 +130,6 @@ export const SERVICE_GROUPS: ServiceGroup[] = [
         icon: FiShield,
         tag: 'GAIA-X',
         availability: availabilityOf(config.edcConnectorUrl),
-      },
-    ],
-  },
-  {
-    id: 'platform',
-    title: 'Platform',
-    description: 'Shared infrastructure used by every service above.',
-    services: [
-      {
-        id: 'auth',
-        name: 'Identity',
-        description:
-          'Keycloak single sign-on. Accounts, roles and client credentials for all DALI services.',
-        url: config.authUrl,
-        icon: FiShield,
-        tag: 'OIDC',
-        availability: availabilityOf(config.authUrl),
       },
     ],
   },

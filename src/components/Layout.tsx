@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react'
-import { FiExternalLink, FiGrid, FiLogOut, FiMenu, FiUser } from 'react-icons/fi'
+import { FiGrid, FiLogOut, FiMenu, FiUser } from 'react-icons/fi'
 import type { IconType } from 'react-icons'
 import keycloak, { redirectUri } from '../auth/keycloak'
 import { config } from '../config'
-import { SERVICE_GROUPS } from '../lib/services'
 import type { NavigateFn, View } from '../types'
 import '../styles/Layout.css'
 
@@ -14,9 +13,11 @@ import '../styles/Layout.css'
  * between DALI front ends is seamless.
  *
  * Differences from dataops-ui:
- *  - the sidebar lists reachable services as outbound links below the internal
- *    nav items, since the portal's job is dispatching to other apps;
  *  - the username in the navbar routes to the account page.
+ *
+ * The sidebar carries only the portal's own views. The tool suite is already in
+ * the navbar, and duplicating it below made the same five links appear twice on
+ * every page.
  */
 
 // Mirrors dataops-ui. AdminLTE binds its sidebar toggle once on
@@ -131,19 +132,6 @@ const PAGE_LABEL: Record<View, string> = {
   account: 'My account',
 }
 
-interface SidebarLink {
-  label: string
-  href: string
-  icon: IconType
-}
-
-/** Reachable services only — never render a link to something unavailable. */
-function outboundLinks(): SidebarLink[] {
-  return SERVICE_GROUPS.flatMap(group => group.services)
-    .filter(service => service.availability === 'available' && service.url)
-    .map(service => ({ label: service.name, href: service.url, icon: service.icon }))
-}
-
 interface LayoutProps {
   view: View
   onNavigate: NavigateFn
@@ -151,7 +139,6 @@ interface LayoutProps {
 }
 
 export default function Layout({ view, onNavigate, children }: LayoutProps) {
-  const links = outboundLinks()
   const pageLabel = PAGE_LABEL[view]
 
   return (
@@ -230,27 +217,6 @@ export default function Layout({ view, onNavigate, children }: LayoutProps) {
                     >
                       <Icon className="nav-icon" />
                       <p>{item.label}</p>
-                    </a>
-                  </li>
-                )
-              })}
-
-              {links.length > 0 && <li className="nav-header">Services</li>}
-              {links.map(link => {
-                const Icon = link.icon
-                return (
-                  <li className="nav-item" key={link.href}>
-                    <a
-                      href={link.href}
-                      className="nav-link"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Icon className="nav-icon" />
-                      <p>
-                        {link.label}
-                        <FiExternalLink className="nav-external" aria-hidden="true" />
-                      </p>
                     </a>
                   </li>
                 )
