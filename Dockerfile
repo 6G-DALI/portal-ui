@@ -25,7 +25,10 @@ ENV KEYCLOAK_ORIGIN=https://auth.dspace.sparkworks.net
 # URLs are settable at run time instead of only at build time. chmod via RUN
 # rather than COPY --chmod so the build does not require BuildKit.
 COPY docker-entrypoint.d/40-portal-config.sh /docker-entrypoint.d/40-portal-config.sh
-RUN chmod +x /docker-entrypoint.d/40-portal-config.sh
+# Retargets index.html's preconnect hints at $KEYCLOAK_ORIGIN, so the TLS
+# handshake to the IdP overlaps the bundle download instead of following it.
+COPY docker-entrypoint.d/45-portal-preconnect.sh /docker-entrypoint.d/45-portal-preconnect.sh
+RUN chmod +x /docker-entrypoint.d/40-portal-config.sh /docker-entrypoint.d/45-portal-preconnect.sh
 COPY --from=build /app/dist /usr/share/nginx/html
 
 # config.js is deliberately left writable/mountable: override it at deploy time

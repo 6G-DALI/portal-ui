@@ -10,6 +10,22 @@
       html, body { background: #0a0d12; }
     </style>
     <!--
+      Warms the connection to the identity provider.
+
+      Nothing renders until keycloak.init() resolves, and its silent-SSO check
+      is an iframe to a DIFFERENT origin — so without this the DNS lookup and
+      TLS handshake for that origin only begin once the bundle has downloaded
+      and started executing. Preconnecting moves that setup off the critical
+      path and into the window where the bundle is still arriving.
+
+      The href is rewritten at container start by 45-portal-preconnect.sh from
+      $KEYCLOAK_ORIGIN — the same value the CSP uses. The literal below is only
+      the development default; a preconnect to a host that is never used costs
+      one idle socket, so a stale value here is harmless rather than breaking.
+    -->
+    <link rel="preconnect" href="https://auth.dspace.sparkworks.net" data-portal-preconnect>
+    <link rel="dns-prefetch" href="https://auth.dspace.sparkworks.net" data-portal-preconnect>
+    <!--
       Runtime configuration (§27). Loaded before the bundle so a deployment can
       repoint service URLs and the Keycloak realm/client by editing one file in
       the container, with no rebuild. Empty values fall back to build-time env,
