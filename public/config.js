@@ -28,6 +28,11 @@ window.__PORTAL_CONFIG__ = {
   northboundApiUrl: '',
   edcConnectorUrl: '',
 
+  // Landing-page counts. Empty means the landing page shows clearly-labelled
+  // placeholder figures; point this at an endpoint returning
+  // { datasets, catalogues, pipelines, models } to show real ones.
+  statsApiUrl: '',
+
   // Platform
   authUrl: 'https://auth.dspace.sparkworks.net/auth',
 

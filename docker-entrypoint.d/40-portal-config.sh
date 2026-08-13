@@ -52,6 +52,7 @@ for pair in \
   'orchestratorUrl:VITE_ORCHESTRATOR_URL' \
   'northboundApiUrl:VITE_NORTHBOUND_API_URL' \
   'edcConnectorUrl:VITE_EDC_CONNECTOR_URL' \
+  'statsApiUrl:VITE_STATS_API_URL' \
   'authUrl:VITE_AUTH_URL' \
   'keycloakRealm:VITE_KEYCLOAK_REALM' \
   'keycloakClientId:VITE_KEYCLOAK_CLIENT_ID'

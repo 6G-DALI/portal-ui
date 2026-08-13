@@ -1,4 +1,5 @@
 import { FiArrowRight, FiExternalLink, FiLock } from 'react-icons/fi'
+import StatsBand from '../components/domain/StatsBand'
 import { DOCUMENTATION, SERVICE_GROUPS } from '../lib/services'
 import { config } from '../config'
 
@@ -50,6 +51,8 @@ export default function LandingPage({ onSignIn, notice }: LandingPageProps) {
             models trained on them — described with a shared metadata profile so results
             stay findable and reusable across projects.
           </p>
+
+          <StatsBand />
 
           <dl className="landing-facts">
             <div>

@@ -85,6 +85,101 @@
   margin-bottom: var(--space-8);
 }
 
+/* ---- Headline counts ----------------------------------------------------
+   The scale claim is what the landing page is selling, so these read as the
+   second-loudest thing on the panel — below the title, above the lede. The
+   §5.2 metric treatment, sized up and set in accent cyan. */
+
+.landing-stats-block {
+  margin-bottom: var(--space-8);
+}
+
+.landing-stats {
+  display: grid;
+  /* Four across when there is room, two-up when there isn't. auto-fit rather
+     than a fixed count so the band never forces the brand column to scroll. */
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.landing-stat {
+  position: relative;
+  /* column-reverse, so the number sits above its label while the markup keeps
+     the <dt> before its <dd> — a screen reader still hears "Datasets, 128". */
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  padding: var(--space-4) var(--space-4) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  /* Slightly lifted off the gradient behind it, so the band reads as one
+     deliberate object rather than four numbers floating on the hero. */
+  background: linear-gradient(
+    180deg,
+    rgba(26, 32, 53, 0.72) 0%,
+    rgba(17, 22, 32, 0.52) 100%
+  );
+  overflow: hidden;
+}
+
+/* Hairline of accent along the top edge — the one piece of colour that marks
+   these as the panel's headline figures. Static: §2.3 reserves glow and
+   motion for genuinely live state, and these are counts, not telemetry. */
+.landing-stat::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-cyan), transparent 75%);
+  opacity: 0.55;
+}
+
+.landing-stat-value {
+  /* §5.2's metric ramp, taken to the top of the range: this is the hero
+     number, not a dashboard tile. */
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-display);
+  font-size: clamp(30px, 3.4vw, 42px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--accent-cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+.landing-stat-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--size-label);
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.landing-stat-icon {
+  display: inline-flex;
+  color: var(--accent-cyan);
+  opacity: 0.6;
+}
+
+/* Sized to the value's own line box, so numbers arriving cause no reflow.
+   Shimmer and reduced-motion handling come from `.skeleton` in ui.css. */
+.landing-stat-skeleton {
+  display: inline-block;
+  width: 2.5ch;
+  height: 0.72em;
+  vertical-align: 0.04em;
+  border-radius: var(--radius-sm);
+}
+
+.landing-stats-note {
+  margin: var(--space-3) 0 0;
+  font-size: var(--size-caption);
+  color: var(--text-muted);
+}
+
 .landing-facts {
   display: grid;
   gap: var(--space-4);

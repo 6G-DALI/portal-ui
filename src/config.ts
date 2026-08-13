@@ -30,6 +30,9 @@ export interface PortalConfig {
   orchestratorUrl: string
   northboundApiUrl: string
   edcConnectorUrl: string
+  /* Endpoint returning the landing-page counts. Empty means "not wired up yet",
+     and the portal falls back to placeholder figures — see lib/stats.ts. */
+  statsApiUrl: string
   /* ---- Single sign-on ----
      Realm and IdP host must match the other DALI front ends for the shared SSO
      session to work; the client is per-application. */
@@ -60,6 +63,7 @@ const DEFAULTS: PortalConfig = {
   orchestratorUrl: '',
   northboundApiUrl: '',
   edcConnectorUrl: '',
+  statsApiUrl: '',
   keycloakRealm: 'dspace',
   keycloakClientId: 'dali-portal',
 }
@@ -78,6 +82,7 @@ const ENV_KEYS: Record<keyof PortalConfig, string> = {
   orchestratorUrl: 'VITE_ORCHESTRATOR_URL',
   northboundApiUrl: 'VITE_NORTHBOUND_API_URL',
   edcConnectorUrl: 'VITE_EDC_CONNECTOR_URL',
+  statsApiUrl: 'VITE_STATS_API_URL',
   keycloakRealm: 'VITE_KEYCLOAK_REALM',
   keycloakClientId: 'VITE_KEYCLOAK_CLIENT_ID',
 }
@@ -108,6 +113,7 @@ export const config: PortalConfig = {
   orchestratorUrl: resolve('orchestratorUrl'),
   northboundApiUrl: resolve('northboundApiUrl'),
   edcConnectorUrl: resolve('edcConnectorUrl'),
+  statsApiUrl: resolve('statsApiUrl'),
   keycloakRealm: resolve('keycloakRealm'),
   keycloakClientId: resolve('keycloakClientId'),
 }
