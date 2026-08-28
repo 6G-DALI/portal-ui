@@ -1,4 +1,4 @@
-import Keycloak from 'keycloak-js'
+import { createKeycloak, redirectUri } from '@6g-dali/ui-shell'
 import { config } from '../config'
 
 /**
@@ -9,19 +9,15 @@ import { config } from '../config'
  * catalogue), so once a user authenticates here, following a link to another
  * service completes its own login silently against the existing SSO session.
  *
- * That only holds while realm and IdP host match across apps — keep these
- * values in step with dataops-ui/src/auth/keycloak.ts. The *client* differs per
- * application, since each needs its own redirect URIs.
+ * That only holds while realm and IdP host match across apps — which is why
+ * they now come from the shared DaliBaseConfig keys rather than being written
+ * out per application. The *client* differs per app, since each needs its own
+ * redirect URIs.
+ *
+ * The adapter is created here, not in the package: each app owns its own
+ * `init()` policy. main.tsx uses `check-sso` so the landing page stays public,
+ * where dataops-ui forces `login-required`.
  */
-const keycloak = new Keycloak({
-  url: config.authUrl,
-  realm: config.keycloakRealm,
-  clientId: config.keycloakClientId,
-})
+export { redirectUri }
 
-/** Clean base URL (no hash) used as the OAuth redirect target. */
-export function redirectUri(): string {
-  return window.location.origin + window.location.pathname
-}
-
-export default keycloak
+export default createKeycloak(config)

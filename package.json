@@ -11,9 +11,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@fontsource/dm-sans": "^5.2.5",
-    "@fontsource/jetbrains-mono": "^5.2.5",
-    "@fontsource/space-mono": "^5.2.5",
+    "@6g-dali/ui-shell": "^0.1.0",
+    "@6g-dali/ui-theme": "^0.1.0",
     "admin-lte": "4.0.2",
     "bootstrap": "^5.3.8",
     "keycloak-js": "^26.2.4",

@@ -6,114 +6,74 @@
  * is nothing but a set of URLs, a rebuild per environment would be absurd —
  * so it uses §27's option 2: a generated `config.js` loaded before the bundle.
  *
- * Resolution order per key:
- *   1. window.__PORTAL_CONFIG__  (public/config.js — editable in the container)
+ * The resolver itself now lives in @6g-dali/ui-shell, so the portal and
+ * dataops-ui cannot drift apart on precedence, on the VITE_* names for the
+ * shared keys, or on URL normalisation. Resolution order per key:
+ *
+ *   1. window.__DALI_CONFIG__    (public/config.js — editable in the container)
  *   2. import.meta.env.VITE_*    (build-time default, useful in dev)
  *   3. the fallback below
+ *
+ * window.__PORTAL_CONFIG__ is still honoured as a legacy fallback, so the
+ * existing docker-entrypoint.d/40-portal-config.sh keeps working untouched.
  */
+import { resolveConfig, DALI_ENV_KEYS, type DaliBaseConfig } from '@6g-dali/ui-shell'
 
-export interface PortalConfig {
-  /* ---- Shared 6G-DALI tool suite ----
-     These four resolve from the SAME VITE_* names dataops-ui reads
-     (VITE_DALI_URL, VITE_DATASPACE_URL, VITE_DATAOPS_URL, VITE_MLOPS_URL), so a
-     single deployment configures the navbar links in both apps identically.
-     Do not rename them without changing dataops-ui/src/components/Layout.tsx. */
-  daliUrl: string
-  portalUrl: string
-  dataspaceUrl: string
-  dataopsUrl: string
-  mlopsUrl: string
-
+/**
+ * The shared keys — the 6G-DALI tool suite and single sign-on — come from
+ * DaliBaseConfig, which is what guarantees the navbar links and the SSO realm
+ * are described identically in every front end. Below are the portal's own.
+ */
+export interface PortalConfig extends DaliBaseConfig {
   repoApiUrl: string
   searchApiUrl: string
-  authUrl: string
   orchestratorUrl: string
   northboundApiUrl: string
   edcConnectorUrl: string
   /* Endpoint returning the landing-page counts. Empty means "not wired up yet",
      and the portal falls back to placeholder figures — see lib/stats.ts. */
   statsApiUrl: string
-  /* ---- Single sign-on ----
-     Realm and IdP host must match the other DALI front ends for the shared SSO
-     session to work; the client is per-application. */
-  keycloakRealm: string
-  keycloakClientId: string
 }
 
-declare global {
-  interface Window {
-    __PORTAL_CONFIG__?: Partial<Record<keyof PortalConfig, string>>
-  }
-}
+export const config = resolveConfig<PortalConfig>({
+  defaults: {
+    // Shared tool suite. Empty by default: an unset URL drops the navbar link
+    // rather than pointing somewhere that does not exist.
+    daliUrl: 'https://6gdali.eu/',
+    // This app's own public URL. Empty by default so the navbar entry is
+    // dropped rather than pointing at a guess; set it per deployment.
+    portalUrl: '',
+    dataspaceUrl: 'https://catalogue.dspace.sparkworks.net',
+    dataopsUrl: '',
+    mlopsUrl: '',
 
-const DEFAULTS: PortalConfig = {
-  // Shared tool suite. Empty by default: an unset URL drops the navbar link
-  // rather than pointing somewhere that does not exist.
-  daliUrl: 'https://6gdali.eu/',
-  // This app's own public URL. Empty by default so the navbar entry is dropped
-  // rather than pointing at a guess; set it per deployment.
-  portalUrl: '',
-  dataspaceUrl: 'https://catalogue.dspace.sparkworks.net',
-  dataopsUrl: '',
-  mlopsUrl: '',
+    // Single sign-on. Realm and IdP host must match the other DALI front ends
+    // for the shared session to work; the client is per-application.
+    authUrl: 'https://auth.dspace.sparkworks.net/auth',
+    keycloakRealm: 'dspace',
+    keycloakClientId: 'dali-portal',
 
-  repoApiUrl: 'https://dspace.sparkworks.net',
-  searchApiUrl: 'https://search.dspace.sparkworks.net',
-  authUrl: 'https://auth.dspace.sparkworks.net/auth',
-  orchestratorUrl: '',
-  northboundApiUrl: '',
-  edcConnectorUrl: '',
-  statsApiUrl: '',
-  keycloakRealm: 'dspace',
-  keycloakClientId: 'dali-portal',
-}
+    repoApiUrl: 'https://dspace.sparkworks.net',
+    searchApiUrl: 'https://search.dspace.sparkworks.net',
+    orchestratorUrl: '',
+    northboundApiUrl: '',
+    edcConnectorUrl: '',
+    statsApiUrl: '',
+  },
+  envKeys: {
+    // The shared names (VITE_DALI_URL, VITE_AUTH_URL, …) come from the package,
+    // so renaming one is a single change that reaches every front end.
+    ...DALI_ENV_KEYS,
 
-const ENV_KEYS: Record<keyof PortalConfig, string> = {
-  // Identical names to dataops-ui — see PortalConfig above.
-  daliUrl: 'VITE_DALI_URL',
-  portalUrl: 'VITE_PORTAL_URL',
-  dataspaceUrl: 'VITE_DATASPACE_URL',
-  dataopsUrl: 'VITE_DATAOPS_URL',
-  mlopsUrl: 'VITE_MLOPS_URL',
-
-  repoApiUrl: 'VITE_REPO_API_URL',
-  searchApiUrl: 'VITE_SEARCH_API_URL',
-  authUrl: 'VITE_AUTH_URL',
-  orchestratorUrl: 'VITE_ORCHESTRATOR_URL',
-  northboundApiUrl: 'VITE_NORTHBOUND_API_URL',
-  edcConnectorUrl: 'VITE_EDC_CONNECTOR_URL',
-  statsApiUrl: 'VITE_STATS_API_URL',
-  keycloakRealm: 'VITE_KEYCLOAK_REALM',
-  keycloakClientId: 'VITE_KEYCLOAK_CLIENT_ID',
-}
-
-function resolve(key: keyof PortalConfig): string {
-  const runtime = window.__PORTAL_CONFIG__?.[key]
-  if (runtime) return stripTrailingSlash(runtime)
-
-  const buildTime = import.meta.env[ENV_KEYS[key]] as string | undefined
-  if (buildTime) return stripTrailingSlash(buildTime)
-
-  return DEFAULTS[key]
-}
-
-function stripTrailingSlash(url: string): string {
-  return url.endsWith('/') && url.length > 1 ? url.slice(0, -1) : url
-}
-
-export const config: PortalConfig = {
-  daliUrl: resolve('daliUrl'),
-  portalUrl: resolve('portalUrl'),
-  dataspaceUrl: resolve('dataspaceUrl'),
-  dataopsUrl: resolve('dataopsUrl'),
-  mlopsUrl: resolve('mlopsUrl'),
-  repoApiUrl: resolve('repoApiUrl'),
-  searchApiUrl: resolve('searchApiUrl'),
-  authUrl: resolve('authUrl'),
-  orchestratorUrl: resolve('orchestratorUrl'),
-  northboundApiUrl: resolve('northboundApiUrl'),
-  edcConnectorUrl: resolve('edcConnectorUrl'),
-  statsApiUrl: resolve('statsApiUrl'),
-  keycloakRealm: resolve('keycloakRealm'),
-  keycloakClientId: resolve('keycloakClientId'),
-}
+    repoApiUrl: 'VITE_REPO_API_URL',
+    searchApiUrl: 'VITE_SEARCH_API_URL',
+    orchestratorUrl: 'VITE_ORCHESTRATOR_URL',
+    northboundApiUrl: 'VITE_NORTHBOUND_API_URL',
+    edcConnectorUrl: 'VITE_EDC_CONNECTOR_URL',
+    statsApiUrl: 'VITE_STATS_API_URL',
+  },
+  // Passed in rather than read inside the package: `import.meta.env` is
+  // substituted by Vite in *this* file, and a pre-bundled dependency cannot
+  // count on that substitution reaching it.
+  env: import.meta.env,
+})

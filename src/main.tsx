@@ -3,6 +3,10 @@ import ReactDOM from 'react-dom/client'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import 'admin-lte/dist/css/adminlte.min.css'
 import 'admin-lte/dist/js/adminlte.min.js'
+// The shared 6G-DALI theme, after Bootstrap and AdminLTE because it is written
+// to override them. index.css (the portal's own styles) comes last.
+import '@6g-dali/ui-theme/fonts.css'
+import '@6g-dali/ui-theme'
 import App from './App'
 import LandingPage from './pages/LandingPage'
 import keycloak, { redirectUri } from './auth/keycloak'
