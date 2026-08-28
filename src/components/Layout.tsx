@@ -68,6 +68,9 @@ export default function Layout({ view, onNavigate, children }: LayoutProps) {
       account={{ onSelect: () => onNavigate('account') }}
       onLogout={() => keycloak.logout({ redirectUri: redirectUri() })}
       footer={<strong>Portal &mdash; entry point to the 6G-DALI data ecosystem.</strong>}
+      // Injected by vite.config.ts: the commit this bundle was built from, so a
+      // deployed page can be traced back to a revision without guessing.
+      build={__BUILD_SHA__}
     >
       {children}
     </AppShell>
