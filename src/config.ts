@@ -14,8 +14,9 @@
  *   2. import.meta.env.VITE_*    (build-time default, useful in dev)
  *   3. the fallback below
  *
- * window.__PORTAL_CONFIG__ is still honoured as a legacy fallback, so the
- * existing docker-entrypoint.d/40-portal-config.sh keeps working untouched.
+ * The entrypoint script emits __DALI_CONFIG__. window.__PORTAL_CONFIG__ is
+ * still read as a fallback, for a deployment that mounts a config.js written
+ * before the key was unified; drop it once none remain.
  */
 import { resolveConfig, DALI_ENV_KEYS, type DaliBaseConfig } from '@6g-dali/ui-shell'
 

@@ -1,12 +1,16 @@
 /*
- * Runtime configuration for the 6G-DALI Portal.
+ * Runtime configuration, read through the shared __DALI_CONFIG__ key.
+ *
+ * Every 6G-DALI front end reads that one key, so a single generated file can
+ * configure the whole suite and the navbar links cannot disagree between apps.
+ * Each app takes the keys it knows and ignores the rest.
  *
  * Served as a static file, so it can be replaced at deploy time by a Docker
  * volume mount, a ConfigMap, or an entrypoint script — no image rebuild needed.
  * Leave a value empty to fall back to the build-time default; leave a service
  * URL empty to have it shown as "Planned" instead of as a broken link.
  */
-window.__PORTAL_CONFIG__ = {
+window.__DALI_CONFIG__ = {
   // Shared 6G-DALI tool suite — these four drive the navbar links and use the
   // SAME names dataops-ui reads, so one config covers both apps. Leave a URL
   // empty to drop its navbar link rather than point at nothing.
