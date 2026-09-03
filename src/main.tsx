@@ -10,7 +10,12 @@ import '@6g-dali/ui-theme'
 import { initTheme } from '@6g-dali/ui-theme/theme.js'
 import App from './App'
 import LandingPage from './pages/LandingPage'
-import keycloak, { redirectUri } from './auth/keycloak'
+import keycloak, {
+  appRedirectUri,
+  clearStoredTokens,
+  loadStoredTokens,
+  persistTokens,
+} from './auth/keycloak'
 import './index.css'
 
 // Applies the stored/OS-preferred theme before anything renders — landing
@@ -21,18 +26,26 @@ initTheme()
 /**
  * Boots the portal.
  *
- * Unlike dataops-ui, which uses `onLoad: 'login-required'` and therefore has no
- * anonymous state, the portal is the ecosystem's front door and must be
- * publicly reachable. So it uses `check-sso`:
+ * Two paths, split by whether a session exists rather than by an explicit
+ * route the visitor picked:
  *
- *   - an existing realm session is picked up silently, and the app renders
- *     signed in — a user arriving from another DALI app never sees a login step;
- *   - no session means the public landing page, with an explicit sign-in action.
+ *   - `/home` is the permanent, always-public landing page for a visitor with
+ *     no session.
+ *   - Everywhere else (in practice just `/`, since in-app navigation is
+ *     hash-based) requires one — a signed-in visitor is sent straight into
+ *     the app, an anonymous one is bounced to `/home`.
  *
- * The silent check runs in a hidden iframe against /silent-check-sso.html so it
- * cannot redirect away from the landing page. Where third-party cookies are
- * blocked the check fails; that is reported rather than swallowed, because
- * otherwise it looks like the portal forgot an existing session.
+ * Session discovery does NOT use Keycloak's `onLoad: 'check-sso'`. That
+ * discovers an existing session via a hidden iframe against Keycloak, which
+ * depends on third-party cookies — ad blockers, Incognito and ITP/ETP all
+ * routinely break it, sometimes only after a real login (its periodic
+ * recheck shares the same iframe and can clear an otherwise-valid token).
+ * Instead, `enterApp` below saves the session's tokens to `sessionStorage`
+ * (see auth/keycloak.ts); on a later load those are handed straight to
+ * `keycloak.init()`, which validates/refreshes them with a plain fetch to the
+ * token endpoint — no iframe, no cookie, nothing for a blocker to catch. No
+ * stored session (or a failed refresh) goes to `/home` with no round trip to
+ * Keycloak at all; a confirmed one enters the app with no confirmation click.
  */
 
 const RETURN_KEY = 'portal_post_login_hash'
@@ -57,10 +70,36 @@ function mount(node: React.ReactElement) {
 
 /** Sends the visitor to Keycloak, remembering where they were headed. */
 function signIn() {
+  // Whatever got them here already failed a stored-token restore (see
+  // bootstrap) — do not let a stale refresh token from that attempt survive
+  // into the fresh login this triggers.
+  clearStoredTokens()
   if (window.location.hash) {
     sessionStorage.setItem(RETURN_KEY, window.location.hash)
   }
-  keycloak.login({ redirectUri: redirectUri() })
+  keycloak.login({ redirectUri: appRedirectUri() })
+}
+
+/** Persists the session, restores the pre-login route, wires silent renewal,
+ *  and mounts the app. */
+function enterApp() {
+  persistTokens()
+
+  const target = sessionStorage.getItem(RETURN_KEY)
+  if (target) {
+    sessionStorage.removeItem(RETURN_KEY)
+    if (window.location.hash !== target) window.location.hash = target
+  }
+
+  // Best-effort silent renewal; fall back to a fresh login on failure.
+  keycloak.onTokenExpired = () => {
+    keycloak.updateToken(30).then(persistTokens).catch(() => {
+      clearStoredTokens()
+      keycloak.login({ redirectUri: appRedirectUri() })
+    })
+  }
+
+  mount(<App />)
 }
 
 async function bootstrap() {
@@ -74,7 +113,7 @@ async function bootstrap() {
     renderFatal(
       `This page is served over an insecure connection (${window.location.protocol}//${window.location.host}), `
       + 'so the browser withholds the Web Crypto API that sign-in requires. '
-      + 'Open the portal over HTTPS \u2014 or on localhost for local development.'
+      + 'Open the portal over HTTPS — or on localhost for local development.'
     )
     return
   }
@@ -85,50 +124,43 @@ async function bootstrap() {
     sessionStorage.setItem(RETURN_KEY, window.location.hash)
   }
 
-  let authenticated = false
-  let notice: string | null = null
+  const stored = loadStoredTokens()
 
+  let authenticated = false
   try {
     authenticated = await keycloak.init({
-      // Public landing page: discover a session, never force one.
-      onLoad: 'check-sso',
-      silentCheckSsoRedirectUri: `${window.location.origin}/silent-check-sso.html`,
+      ...stored,
       pkceMethod: 'S256',
       responseMode: 'query',
-      redirectUri: redirectUri(),
+      redirectUri: appRedirectUri(),
       enableLogging: import.meta.env.DEV,
+      // The stored-token restore above is what makes a returning visitor
+      // silent; this periodic recheck would only add back the iframe risk
+      // the whole scheme exists to avoid (see the comment above).
+      checkLoginIframe: false,
     })
   } catch (err) {
-    // A failed *silent* check is recoverable — fall back to the landing page and
-    // say why. Only a misconfigured or unreachable IdP is fatal.
-    const message = (err as Error)?.message || 'The identity provider could not be reached.'
-    if (/iframe|cookie|timed? ?out/i.test(message)) {
-      notice = 'Could not check for an existing session automatically — '
-        + 'your browser may be blocking third-party cookies. Sign in to continue.'
-    } else {
-      renderFatal(message)
-      return
-    }
-  }
-
-  if (!authenticated) {
-    mount(<LandingPage onSignIn={signIn} notice={notice} />)
+    clearStoredTokens()
+    renderFatal((err as Error)?.message || 'The identity provider could not be reached.')
     return
   }
 
-  // Restore the originally requested route.
-  const target = sessionStorage.getItem(RETURN_KEY)
-  if (target) {
-    sessionStorage.removeItem(RETURN_KEY)
-    if (window.location.hash !== target) window.location.hash = target
+  if (!authenticated) {
+    clearStoredTokens()
+    if (window.location.pathname !== '/home') {
+      window.history.replaceState(null, '', '/home')
+    }
+    mount(<LandingPage onSignIn={signIn} />)
+    return
   }
 
-  // Best-effort silent renewal; fall back to a fresh login on failure.
-  keycloak.onTokenExpired = () => {
-    keycloak.updateToken(30).catch(() => keycloak.login({ redirectUri: redirectUri() }))
+  // /home is only ever the anonymous view — a recognised visitor who landed
+  // there anyway (a bookmark, the back button) belongs in the app instead.
+  if (window.location.pathname === '/home') {
+    window.history.replaceState(null, '', '/')
   }
 
-  mount(<App />)
+  enterApp()
 }
 
 bootstrap()

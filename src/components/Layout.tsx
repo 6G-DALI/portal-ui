@@ -7,7 +7,7 @@ import {
   type Crumb,
   type NavItem,
 } from '@6g-dali/ui-shell'
-import keycloak, { redirectUri } from '../auth/keycloak'
+import keycloak, { appRedirectUri, clearStoredTokens } from '../auth/keycloak'
 import { config } from '../config'
 import type { NavigateFn, View } from '../types'
 
@@ -66,7 +66,12 @@ export default function Layout({ view, onNavigate, children }: LayoutProps) {
       // users expect from a portal top bar (§7.2). Unlike dataops-ui, which
       // links out to this app, the page is one of the portal's own views.
       account={{ onSelect: () => onNavigate('account') }}
-      onLogout={() => keycloak.logout({ redirectUri: redirectUri() })}
+      onLogout={() => {
+        // Keycloak's own logout only ends the server-side session; the stored
+        // refresh token would otherwise still restore it on the next load.
+        clearStoredTokens()
+        keycloak.logout({ redirectUri: appRedirectUri() })
+      }}
       footer={<strong>Portal &mdash; entry point to the 6G-DALI data ecosystem.</strong>}
       // Injected by vite.config.ts: the commit this bundle was built from, so a
       // deployed page can be traced back to a revision without guessing.

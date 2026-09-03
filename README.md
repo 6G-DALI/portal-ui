@@ -301,14 +301,14 @@ to all three of:
 - **Web origins** — `https://<hostname>` (or `+` to inherit from the redirect URIs)
 
 Omitting Web origins is what produces the opaque
-`CORS error on /protocol/openid-connect/token`. The silent-SSO check also needs
-`https://<hostname>/silent-check-sso.html` to be a permitted redirect URI.
+`CORS error on /protocol/openid-connect/token`.
 
 ### CSP and the Keycloak origin
 
 nginx's Content-Security-Policy names the Keycloak origin in `connect-src`
-(keycloak-js fetches the token and account endpoints) and `frame-src` (the
-`check-sso` iframe). It is substituted at container start from
+(keycloak-js fetches the token and account endpoints) and `form-action`
+(Keycloak's hosted login form posts back to this origin). It is substituted at
+container start from
 `KEYCLOAK_ORIGIN`, via the official nginx image's `/etc/nginx/templates`
 mechanism, with `NGINX_ENVSUBST_FILTER` restricting envsubst to that one
 variable so nginx's own `$uri`/`$host` survive.
@@ -323,7 +323,7 @@ sign-in silently does nothing.
 |---|---|
 | `Web Crypto API is not available` | The page is on plain `http://` on a non-localhost host. `crypto.subtle`, which PKCE `S256` needs, is only exposed in a **secure context** — HTTPS, or `http://localhost` / `127.0.0.1`. Open the portal over HTTPS. |
 | CORS error on `/protocol/openid-connect/token` | The browser's origin is not in the client's **Web origins**. `localhost` and `127.0.0.1` are different origins; so is each port and each hostname. |
-| Sign-in does nothing, console shows a CSP violation | `KEYCLOAK_ORIGIN` does not match the IdP, so `connect-src`/`frame-src` block it. |
+| Sign-in does nothing, console shows a CSP violation | `KEYCLOAK_ORIGIN` does not match the IdP, so `connect-src` blocks it. |
 | `invalid_client` from Keycloak | `keycloakClientId` does not exist in the realm. |
 | 401/403 from the account page | The token lacks the `account` audience, or the user lacks `manage-account`. |
 

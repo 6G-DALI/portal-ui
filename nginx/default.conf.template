@@ -24,37 +24,11 @@ server {
         return 301 https://$host$request_uri;
     }
 
-    # Single page app.
+    # Single page app. `/home` (public landing) and `/` (the app) are both
+    # served the same bundle — main.tsx decides which to render based on
+    # whether a stored session validates, not on the path itself.
     location / {
         try_files $uri $uri/ /index.html;
-    }
-
-    # The silent-SSO callback is loaded INSIDE a same-origin iframe, so it is
-    # the one page that must be framable. The server-level
-    # `frame-ancestors 'none'` + `X-Frame-Options: DENY` below refuse all
-    # framing — including by this origin — which surfaces in DevTools as the
-    # unhelpful "(blocked:other)".
-    #
-    # Scoped here rather than relaxed site-wide, so only this callback is
-    # framable and only by us; the app keeps the strictest posture.
-    #
-    # nginx add_header inheritance is all-or-nothing: declaring any add_header
-    # in a location drops every add_header from the server block, so the ones
-    # we still want are repeated here.
-    location = /silent-check-sso.html {
-        # 'self' alongside 'unsafe-inline': the page's own logic is a single
-        # inline postMessage, but Cloudflare injects a same-origin
-        # /cdn-cgi/scripts/... Rocket Loader script into HTML responses, and
-        # without 'self' that injection is refused as (blocked:csp).
-        # Rocket Loader should still be turned OFF for this hostname — it defers
-        # and rewrites scripts, which breaks the callback's timing.
-        add_header Content-Security-Policy "default-src 'none'; script-src 'self' 'unsafe-inline'; frame-ancestors 'self'; base-uri 'none'" always;
-        add_header X-Frame-Options "SAMEORIGIN" always;
-        add_header X-Content-Type-Options "nosniff" always;
-        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-        # It carries an authorization code in the query string — never cache it.
-        add_header Cache-Control "no-store, must-revalidate" always;
-        expires -1;
     }
 
     # Runtime configuration must never be cached, or a deploy-time URL change
@@ -72,20 +46,17 @@ server {
     # §25 hardening.
     #
     # ${KEYCLOAK_ORIGIN} is substituted at container start (see the Dockerfile's
-    # /etc/nginx/templates mechanism). It must be present in BOTH:
-    #   connect-src — keycloak-js fetches the token and account endpoints;
-    #   frame-src   — `check-sso` loads a hidden iframe pointed at Keycloak,
-    #                 and Keycloak's prompt=none response REDIRECTS that iframe
-    #                 back to /silent-check-sso.html on this origin. CSP is
-    #                 enforced on the redirect target too, so 'self' is required
-    #                 as well as the IdP — omitting it fails as
-    #                 ERR_BLOCKED_BY_CSP reported against the auth URL.
-    # With a bare `default-src 'self'` both are blocked and login fails, which
-    # is not obvious from the symptom.
+    # /etc/nginx/templates mechanism). Needed in connect-src — keycloak-js
+    # fetches the token and account endpoints — and in form-action, since
+    # Keycloak's hosted login form POSTs back to this origin's redirect_uri.
+    # No frame-src entry: there is no iframe anywhere in this app's auth flow
+    # (see auth/keycloak.ts — session discovery uses stored tokens instead of
+    # `check-sso`'s hidden iframe), so sign-in is always a full top-level
+    # redirect to Keycloak.
     #
     # 'unsafe-inline' is needed for style-src only, because of index.html's
     # pre-paint background block.
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' ${KEYCLOAK_ORIGIN}; frame-src 'self' ${KEYCLOAK_ORIGIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self' ${KEYCLOAK_ORIGIN}" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' ${KEYCLOAK_ORIGIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self' ${KEYCLOAK_ORIGIN}" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header X-Frame-Options "DENY" always;

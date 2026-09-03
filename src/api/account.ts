@@ -1,4 +1,4 @@
-import keycloak from '../auth/keycloak'
+import keycloak, { persistTokens } from '../auth/keycloak'
 import { config } from '../config'
 
 /**
@@ -62,7 +62,7 @@ export class AccountApiError extends Error {
 /** Refresh the token if it is close to expiry, then return the bearer header. */
 async function authHeader(): Promise<Record<string, string>> {
   try {
-    await keycloak.updateToken(30)
+    if (await keycloak.updateToken(30)) persistTokens()
   } catch {
     // Silent refresh failed (e.g. the SSO session ended). The request below
     // will 401 and surface as an error the user can act on.

@@ -4,7 +4,8 @@ import { DOCUMENTATION, SERVICE_GROUPS } from '../lib/services'
 import { config } from '../config'
 
 /**
- * Public landing page — the only view an unauthenticated visitor sees.
+ * Public landing page — served at /home, the only view an unauthenticated
+ * visitor sees (see main.tsx for how a visitor ends up here).
  *
  * Follows §13.1's full-screen split layout: identity and context on the left,
  * the sign-in action on the right, and no application navigation.
@@ -21,11 +22,9 @@ import { config } from '../config'
 
 interface LandingPageProps {
   onSignIn: () => void
-  /** Set when a silent SSO check failed rather than simply finding no session. */
-  notice?: string | null
 }
 
-export default function LandingPage({ onSignIn, notice }: LandingPageProps) {
+export default function LandingPage({ onSignIn }: LandingPageProps) {
   const serviceNames = SERVICE_GROUPS.flatMap(group =>
     group.services.map(service => service.name))
 
@@ -94,12 +93,6 @@ export default function LandingPage({ onSignIn, notice }: LandingPageProps) {
             The portal and every DALI service share one account. Signing in here gives you
             access to all of them without logging in again.
           </p>
-
-          {/* A failed silent check is worth stating — otherwise a blocked
-              third-party cookie looks like "the portal forgot me" (§20). */}
-          {notice && (
-            <div className="alert alert-warning" role="status">{notice}</div>
-          )}
 
           <button
             type="button"
