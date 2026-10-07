@@ -24,7 +24,9 @@ FROM nginx:1.27-alpine
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 
 # Restrict envsubst to our own variable so nginx's own $uri, $host etc. survive.
-ENV NGINX_ENVSUBST_FILTER=KEYCLOAK_ORIGIN
+ENV NGINX_ENVSUBST_FILTER=KEYCLOAK_ORIGIN|STATS_ORIGIN
+# Origin of the stats API when it is not same-origin; empty by default.
+ENV STATS_ORIGIN=
 # Overridden at run time; this default matches src/config.ts.
 ENV KEYCLOAK_ORIGIN=https://auth.dspace.sparkworks.net
 

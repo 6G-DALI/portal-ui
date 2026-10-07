@@ -117,9 +117,13 @@ export default function StatsBand() {
   return (
     <div className="landing-stats-block">
       <dl className="landing-stats">
-        {STATS.map(spec => (
-          <Stat key={spec.key} spec={spec} value={stats ? stats[spec.key] : null} />
-        ))}
+        {STATS
+          // While loading `stats` is null and every tile shows its skeleton. Once it is
+          // loaded, a figure that is null is unknown: leave the tile out, not a 0.
+          .filter(spec => !stats || stats[spec.key] !== null)
+          .map(spec => (
+            <Stat key={spec.key} spec={spec} value={stats ? stats[spec.key] : null} />
+          ))}
       </dl>
 
       {stats && source === 'placeholder' && (

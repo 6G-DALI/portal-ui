@@ -12,18 +12,20 @@ import { config } from '../config'
  * (or statsApiUrl in config.js) to an endpoint returning the JSON below, and
  * `source` flips to 'live' on its own.
  *
- *   { "datasets": 128, "catalogues": 6, "pipelines": 24, "models": 9 }
+ *   { "datasets": 128, "catalogues": 6, "pipelines": 24, "models": null }
+ *
+ * The orchestrator serves exactly this at GET /stats/portal. A null figure is left out of the band.
  */
 
 export interface PortalStats {
-  /** Dataset records in the federated catalogue. */
-  datasets: number
+  /** Dataset records in the federated catalogue. null = not known, so not shown. */
+  datasets: number | null
   /** Catalogues federated into the data space. */
-  catalogues: number
+  catalogues: number | null
   /** DataOps pipelines defined across all catalogues. */
-  pipelines: number
+  pipelines: number | null
   /** MLOps models published against catalogue datasets. */
-  models: number
+  models: number | null
 }
 
 export type StatsSource = 'live' | 'placeholder'
@@ -42,11 +44,21 @@ const PLACEHOLDER_STATS: PortalStats = {
   models: 9,
 }
 
-function isPortalStats(value: unknown): value is PortalStats {
-  if (!value || typeof value !== 'object') return false
+const STAT_KEYS = ['datasets', 'catalogues', 'pipelines', 'models'] as const
+
+/**
+ * A usable response has at least one real count. A missing or null figure means the API could
+ * not determine it (the orchestrator reports null for a source it cannot reach): it is left
+ * out rather than shown as 0, which would claim a measurement nobody took.
+ */
+function parsePortalStats(value: unknown): PortalStats | null {
+  if (!value || typeof value !== 'object') return null
   const v = value as Record<string, unknown>
-  return (['datasets', 'catalogues', 'pipelines', 'models'] as const)
-    .every(key => typeof v[key] === 'number' && Number.isFinite(v[key]))
+  const count = (key: string): number | null =>
+    typeof v[key] === 'number' && Number.isFinite(v[key]) ? (v[key] as number) : null
+
+  const stats = Object.fromEntries(STAT_KEYS.map(key => [key, count(key)])) as unknown as PortalStats
+  return STAT_KEYS.some(key => stats[key] !== null) ? stats : null
 }
 
 /**
@@ -61,10 +73,10 @@ export async function fetchPortalStats(signal?: AbortSignal): Promise<StatsResul
     const response = await fetch(config.statsApiUrl, { signal })
     if (!response.ok) return { stats: PLACEHOLDER_STATS, source: 'placeholder' }
 
-    const body: unknown = await response.json()
-    if (!isPortalStats(body)) return { stats: PLACEHOLDER_STATS, source: 'placeholder' }
+    const stats = parsePortalStats(await response.json())
+    if (!stats) return { stats: PLACEHOLDER_STATS, source: 'placeholder' }
 
-    return { stats: body, source: 'live' }
+    return { stats, source: 'live' }
   } catch {
     return { stats: PLACEHOLDER_STATS, source: 'placeholder' }
   }

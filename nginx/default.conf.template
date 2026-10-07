@@ -49,6 +49,8 @@ server {
     # /etc/nginx/templates mechanism). Needed in connect-src — keycloak-js
     # fetches the token and account endpoints — and in form-action, since
     # Keycloak's hosted login form POSTs back to this origin's redirect_uri.
+    # ${STATS_ORIGIN} is the origin of VITE_STATS_API_URL when that is on another host than
+    # this page (empty otherwise).
     # No frame-src entry: there is no iframe anywhere in this app's auth flow
     # (see auth/keycloak.ts — session discovery uses stored tokens instead of
     # `check-sso`'s hidden iframe), so sign-in is always a full top-level
@@ -56,7 +58,7 @@ server {
     #
     # 'unsafe-inline' is needed for style-src only, because of index.html's
     # pre-paint background block.
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' ${KEYCLOAK_ORIGIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self' ${KEYCLOAK_ORIGIN}" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' ${KEYCLOAK_ORIGIN} ${STATS_ORIGIN}; frame-ancestors 'none'; base-uri 'self'; form-action 'self' ${KEYCLOAK_ORIGIN}" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
     add_header X-Frame-Options "DENY" always;
