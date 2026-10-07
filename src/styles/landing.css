@@ -111,15 +111,14 @@
   flex-direction: column-reverse;
   justify-content: flex-end;
   padding: var(--space-4) var(--space-4) var(--space-3);
-  border: 1px solid var(--border);
+  /* Theme tokens, so the panel is legible in both themes. These were hard-coded dark
+     translucent colours: nearly invisible on the dark hero, and a muddy grey box on the
+     light one. An opaque surface with a bright border lifts each count off the gradient
+     behind it in either theme. */
+  border: 1px solid var(--border-bright);
   border-radius: var(--radius-md);
-  /* Slightly lifted off the gradient behind it, so the band reads as one
-     deliberate object rather than four numbers floating on the hero. */
-  background: linear-gradient(
-    180deg,
-    rgba(26, 32, 53, 0.72) 0%,
-    rgba(17, 22, 32, 0.52) 100%
-  );
+  background: var(--bg-surface);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14), 0 8px 20px -10px rgba(var(--accent-cyan-rgb, 0, 212, 255), 0.45);
   overflow: hidden;
 }
 
@@ -131,8 +130,7 @@
   position: absolute;
   inset: 0 0 auto;
   height: 2px;
-  background: linear-gradient(90deg, var(--accent-cyan), transparent 75%);
-  opacity: 0.55;
+  background: linear-gradient(90deg, var(--accent-cyan), transparent 85%);
 }
 
 .landing-stat-value {
@@ -161,7 +159,6 @@
 .landing-stat-icon {
   display: inline-flex;
   color: var(--accent-cyan);
-  opacity: 0.6;
 }
 
 /* Sized to the value's own line box, so numbers arriving cause no reflow.
@@ -310,4 +307,14 @@
   .landing-brand { order: 2; }
   .landing-action { order: 1; }
   .landing-footer { order: 3; }
+}
+
+/* ---- Right: logo above the sign-in heading ------------------------------- */
+
+.landing-logo {
+  display: block;
+  width: min(240px, 70%);
+  height: auto;
+  margin: 0 0 var(--space-6);
+  border-radius: var(--radius-md);
 }

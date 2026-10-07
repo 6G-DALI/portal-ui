@@ -1,5 +1,6 @@
 import { FiArrowRight, FiExternalLink, FiLock } from 'react-icons/fi'
 import StatsBand from '../components/domain/StatsBand'
+import logo from '../assets/6g-dali-logo.png'
 import { DOCUMENTATION, SERVICE_GROUPS } from '../lib/services'
 import { config } from '../config'
 
@@ -88,6 +89,7 @@ export default function LandingPage({ onSignIn }: LandingPageProps) {
       {/* ── Right: the sign-in action ───────────────────────────────────── */}
       <section className="landing-action" aria-labelledby="signin-heading">
         <div className="landing-action-inner">
+          <img className="landing-logo" src={logo} alt="6G-DALI" width={449} height={149} />
           <h2 className="landing-action-title" id="signin-heading">Sign in</h2>
           <p className="landing-action-text">
             The portal and every DALI service share one account. Signing in here gives you

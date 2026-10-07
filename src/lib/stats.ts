@@ -1,20 +1,19 @@
 import { config } from '../config'
 
 /**
- * Landing-page counts for the data ecosystem.
+ * Landing-page counts for the data ecosystem, from the orchestrator's GET /stats/portal.
  *
- * These are PLACEHOLDER figures until a stats endpoint exists. §2.3 forbids
- * decoration that communicates nothing real, so the numbers are never presented
- * as measured: `source` travels with them and the UI labels placeholder data
- * explicitly rather than letting a visitor read invented counts as fact.
+ * Only real figures are ever shown. When the endpoint is not configured, cannot be reached, or
+ * answers with nothing usable, there are no figures at all and the page leaves the band out:
+ * §2.3 forbids decoration that communicates nothing real, and an invented number would be worse
+ * than none.
  *
- * Switching to the real thing is configuration, not code: set VITE_STATS_API_URL
- * (or statsApiUrl in config.js) to an endpoint returning the JSON below, and
- * `source` flips to 'live' on its own.
+ * Wiring it up is configuration, not code: set VITE_STATS_API_URL (or statsApiUrl in config.js)
+ * to an endpoint returning the JSON below.
  *
  *   { "datasets": 128, "catalogues": 6, "pipelines": 24, "models": null }
  *
- * The orchestrator serves exactly this at GET /stats/portal. A null figure is left out of the band.
+ * A null figure means the API could not determine it; that one tile is left out of the band.
  */
 
 export interface PortalStats {
@@ -28,28 +27,12 @@ export interface PortalStats {
   models: number | null
 }
 
-export type StatsSource = 'live' | 'placeholder'
-
-export interface StatsResult {
-  stats: PortalStats
-  source: StatsSource
-}
-
-/** Stand-in values, deliberately modest — a fake 10,000 would misrepresent the
- *  deployment far more than a fake 128 does. Delete once the API is live. */
-const PLACEHOLDER_STATS: PortalStats = {
-  datasets: 128,
-  catalogues: 6,
-  pipelines: 24,
-  models: 9,
-}
-
 const STAT_KEYS = ['datasets', 'catalogues', 'pipelines', 'models'] as const
 
 /**
- * A usable response has at least one real count. A missing or null figure means the API could
- * not determine it (the orchestrator reports null for a source it cannot reach): it is left
- * out rather than shown as 0, which would claim a measurement nobody took.
+ * A usable response has at least one real count. A missing or null figure means the API
+ * could not determine it: it is left out rather than shown as 0, which would claim a
+ * measurement nobody took.
  */
 function parsePortalStats(value: unknown): PortalStats | null {
   if (!value || typeof value !== 'object') return null
@@ -62,22 +45,19 @@ function parsePortalStats(value: unknown): PortalStats | null {
 }
 
 /**
- * Never rejects: the landing page is the pre-authentication view, and a stats
- * endpoint being down is not a reason to fail the way in. A failed or malformed
- * response degrades to the placeholders, which are already labelled as such.
+ * The counts, or null when they are unavailable for any reason.
+ *
+ * Never rejects: the landing page is the pre-authentication view, and a stats endpoint being
+ * down is not a reason to fail the way in.
  */
-export async function fetchPortalStats(signal?: AbortSignal): Promise<StatsResult> {
-  if (!config.statsApiUrl) return { stats: PLACEHOLDER_STATS, source: 'placeholder' }
+export async function fetchPortalStats(signal?: AbortSignal): Promise<PortalStats | null> {
+  if (!config.statsApiUrl) return null
 
   try {
     const response = await fetch(config.statsApiUrl, { signal })
-    if (!response.ok) return { stats: PLACEHOLDER_STATS, source: 'placeholder' }
-
-    const stats = parsePortalStats(await response.json())
-    if (!stats) return { stats: PLACEHOLDER_STATS, source: 'placeholder' }
-
-    return { stats, source: 'live' }
+    if (!response.ok) return null
+    return parsePortalStats(await response.json())
   } catch {
-    return { stats: PLACEHOLDER_STATS, source: 'placeholder' }
+    return null
   }
 }

@@ -1,15 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { FiCpu, FiDatabase, FiGitBranch, FiLayers } from 'react-icons/fi'
 import type { IconType } from 'react-icons'
-import { fetchPortalStats, type PortalStats, type StatsSource } from '../../lib/stats'
+import { fetchPortalStats, type PortalStats } from '../../lib/stats'
 
 /**
  * The four headline counts — the scale claim the landing page is making, so
  * they are the panel's second-loudest element after the title.
  *
  * Renders skeletons rather than zeros while loading: a real 0 and "not known
- * yet" must not look alike (§20). When the figures are placeholders, that is
- * stated in text under the band — §2.3 rules out numbers that imply a
+ * yet" must not look alike (§20). If the figures turn out to be unavailable,
+ * the band is not rendered at all — §2.3 rules out numbers that imply a
  * measurement nobody took.
  */
 
@@ -97,8 +97,8 @@ function Stat({ spec: { label, icon: Icon }, value }: StatProps) {
 }
 
 export default function StatsBand() {
-  const [stats, setStats] = useState<PortalStats | null>(null)
-  const [source, setSource] = useState<StatsSource>('placeholder')
+  // undefined: still loading. null: the API gave nothing usable.
+  const [stats, setStats] = useState<PortalStats | null | undefined>(undefined)
 
   useEffect(() => {
     // Abort on unmount so a slow endpoint cannot setState after teardown —
@@ -107,30 +107,26 @@ export default function StatsBand() {
 
     fetchPortalStats(controller.signal).then(result => {
       if (controller.signal.aborted) return
-      setStats(result.stats)
-      setSource(result.source)
+      setStats(result)
     })
 
     return () => controller.abort()
   }, [])
 
+  // No figures to show: leave the band out entirely rather than render an empty frame.
+  if (stats === null) return null
+
   return (
     <div className="landing-stats-block">
       <dl className="landing-stats">
         {STATS
-          // While loading `stats` is null and every tile shows its skeleton. Once it is
+          // While loading `stats` is undefined and every tile shows its skeleton. Once it is
           // loaded, a figure that is null is unknown: leave the tile out, not a 0.
           .filter(spec => !stats || stats[spec.key] !== null)
           .map(spec => (
             <Stat key={spec.key} spec={spec} value={stats ? stats[spec.key] : null} />
           ))}
       </dl>
-
-      {stats && source === 'placeholder' && (
-        <p className="landing-stats-note">
-          Indicative figures — live counts are not published yet.
-        </p>
-      )}
     </div>
   )
 }
