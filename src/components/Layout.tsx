@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { FiGrid, FiUser } from 'react-icons/fi'
 import {
   AppShell,
+  BrandLogo,
   daliTools,
   usernameOf,
   type Crumb,
@@ -54,7 +55,7 @@ export default function Layout({ view, onNavigate, children }: LayoutProps) {
 
   return (
     <AppShell<View>
-      brand={<>6G-<span className="dali-accent">DALI</span> Portal</>}
+      brand={<BrandLogo product="Portal" />}
       homeView="overview"
       nav={NAV_ITEMS}
       activeView={view}
